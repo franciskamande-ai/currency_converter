@@ -1,158 +1,164 @@
+import json
+import urllib.request
 import streamlit as st
-import requests
-from datetime import datetime
+import pandas as pd
+import datetime
+from streamlit import cache_data
 
-st.set_page_config(page_title="Currency Converter", layout="centered")
-
-st.title("💱 Real-Time Currency Converter")
-
-# API configuration
-API_KEY = "caa4b53d5c599f5dd44a0700"
-BASE_URL = f"https://v6.exchangerate-api.com/v6/{API_KEY}"
-
-# Enhanced styling with clear visibility
+# Streamlit app title and styling
+st.set_page_config(page_title="FKN CURRENCY CONVERTER", layout="wide")
 st.markdown("""
     <style>
-        /* Input fields with high contrast */
-        .stTextInput input, .stNumberInput input {
-            background-color: #f8f9fa;
-            border: 1px solid #ced4da;
-            border-radius: 5px;
-            color: #212529 !important;
-            padding: 8px 12px;
-        }
-        /* Input labels */
-        .stTextInput label, .stNumberInput label {
-            color: #495057 !important;
-            font-weight: 500;
-        }
-        /* Button styling */
-        .stButton button {
-            background-color: #28a745;
-            color: white !important;
-            border-radius: 5px;
-            padding: 10px 24px;
-            width: 100%;
-            font-weight: bold;
-            border: none;
-        }
-        .stButton button:hover {
-            background-color: #218838;
-            color: white !important;
-        }
-        /* Result boxes */
-        .success-box {
-            padding: 15px;
-            background-color: #e6f7ee;
-            border-radius: 8px;
-            border-left: 5px solid #28a745;
-            margin: 15px 0;
-            color: #155724;
-        }
-        .error-box {
-            padding: 15px;
-            background-color: #f8d7da;
-            border-radius: 8px;
-            border-left: 5px solid #dc3545;
-            margin: 15px 0;
-            color: #721c24;
-        }
-        /* Footer */
-        footer {
-            position: fixed;
-            left: 0;
-            bottom: 0;
-            width: 100%;
-            background-color: #f8f9fa;
-            text-align: center;
-            padding: 10px;
-            border-top: 1px solid #dee2e6;
-            color: #6c757d;
-        }
+    input {
+        color: black !important;
+    }
+    .st-emotion-cache-1v0mbdj e115fcil1 img {
+        border-radius: 10px;
+    }
     </style>
-""", unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
-# Sidebar for additional info
-with st.sidebar:
-    st.header("ℹ️ About")
-    st.info("""
-    This app uses real-time exchange rates from ExchangeRate-API.
-    Supported currencies: USD, EUR, GBP, JPY, KES, etc.
-    """)
-    st.write("Enter base currency, target currency, and amount to convert.")
+st.title("💱 FKN CURRENCY CONVERTER")
 
-# User input in columns
-col1, col2 = st.columns(2)
+# --- Currency List ---
+currency_list = [
+    "USD", "KES", "EUR", "GBP", "JPY", "AUD", "CAD", "CHF", "ZAR", "INR", 
+    "CNY", "NZD", "SGD", "NGN", "GHS", "TZS", "UGX", "RUB", "BRL", "MXN"
+]
+
+# --- UI: Currency dropdowns and amount ---
+col1, col2, col3 = st.columns(3)
 with col1:
-    base_currency = st.text_input("From currency (e.g. USD):", value="USD", max_chars=3).upper()
+    base_currency = st.selectbox("Base currency:", currency_list, index=0)
 with col2:
-    target_currency = st.text_input("To currency (e.g. KES):", value="KES", max_chars=3).upper()
+    target_currency = st.selectbox("Target currency:", currency_list, index=1)
+with col3:
+    amount = st.number_input("Amount to convert:", value=1.0, min_value=0.01)
 
-amount = st.number_input("Amount to convert:", min_value=0.0, value=1.0, step=0.01, format="%.2f")
+# Cache historical data for 6 hours to avoid hitting API limits
+@cache_data(ttl=21600)  # 6 hours in seconds
+def get_historical_data(base, target, start_date, end_date):
+    hist_url = f"http://api.exchangerate.host/timeframe?access_key=957c96b16d2a683a8592b2340d59afd0&source={base}&currencies={target}&start_date={start_date}&end_date={end_date}"
+    
+    try:
+        with urllib.request.urlopen(hist_url) as response:
+            data = json.loads(response.read())
+            if data.get("success"):
+                return data
+            return None
+    except:
+        return None
 
-if st.button("🔁 Convert Currency"):
-    if not base_currency or not target_currency:
-        st.markdown("""
-        <div class="error-box">
-            <p>Please enter both currencies.</p>
-        </div>
-        """, unsafe_allow_html=True)
-    elif base_currency == target_currency:
-        st.markdown("""
-        <div class="error-box">
-            <p>Base and target currencies cannot be the same.</p>
-        </div>
-        """, unsafe_allow_html=True)
-    else:
-        with st.spinner("⏳ Fetching exchange rates..."):
-            try:
-                # First get all exchange rates for base currency
-                url = f"{BASE_URL}/latest/{base_currency}"
-                response = requests.get(url)
-                data = response.json()
-                
-                if data.get("result") == "success":
-                    rates = data.get("conversion_rates", {})
-                    if target_currency in rates:
-                        rate = rates[target_currency]
-                        converted = amount * rate
-                        date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                        
-                        st.markdown(f"""
-                        <div class="success-box">
-                            <h3>💰 Conversion Result</h3>
-                            <p><strong>{amount:,.2f} {base_currency} = {converted:,.2f} {target_currency}</strong></p>
-                            <p>💱 Exchange rate: 1 {base_currency} = {rate:.6f} {target_currency}</p>
-                            <p><small>🕒 Rates as of: {date}</small></p>
-                        </div>
-                        """, unsafe_allow_html=True)
-                    else:
-                        st.markdown(f"""
-                        <div class="error-box">
-                            <p>Currency {target_currency} not found in API response.</p>
-                            <p>Available currencies: {', '.join(list(rates.keys())[:10])}...</p>
-                        </div>
-                        """, unsafe_allow_html=True)
+# --- API for live conversion ---
+if st.button("Convert"):
+    api_url = f"https://v6.exchangerate-api.com/v6/caa4b53d5c599f5dd44a0700/latest/{base_currency}"
+
+    try:
+        with urllib.request.urlopen(api_url) as response:
+            data = json.loads(response.read())
+
+            if data["result"] == "success":
+                rate = data["conversion_rates"].get(target_currency)
+                if rate:
+                    converted = round(amount * rate, 2)
+                    st.success(f"✅ {amount} {base_currency} = {converted} {target_currency}")
                 else:
-                    error_type = data.get("error-type", "unknown")
-                    st.markdown(f"""
-                    <div class="error-box">
-                        <p>API Error: {error_type.replace('-', ' ').title()}</p>
-                        <p>Please check your currencies and try again.</p>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    
-            except Exception as e:
-                st.markdown(f"""
-                <div class="error-box">
-                    <p>Connection Error: {str(e)}</p>
-                    <p>Please check your internet connection.</p>
-                </div>
-                """, unsafe_allow_html=True)
+                    st.error(f"❌ Target currency '{target_currency}' not found.")
+            else:
+                st.error("❌ API Error: " + str(data.get("error-type", "Unknown error")))
+    except Exception as e:
+        st.error(f"❌ Error: {e}")
 
-# Footer
-st.markdown("""
-    <footer>
-        <p>Made with ❤️ by Francis Kamande | ExchangeRate-API</p>
-    </footer>
-""", unsafe_allow_html=True)
+# --- Sidebar for Historical Data and Stats ---
+with st.sidebar:
+    st.header("📉 Historical Insights")
+    
+    # Load cached data or show last successful fetch
+    end_date = datetime.date.today()
+    start_date = end_date - datetime.timedelta(days=365)
+    
+    with st.spinner("Loading historical data..."):
+        hist_data = get_historical_data(base_currency, target_currency, start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d"))
+    
+    if hist_data:
+        rates = hist_data["quotes"]
+        
+        # Convert to pandas DataFrame
+        df = pd.DataFrame.from_dict(rates, orient='index')
+        df.index = pd.to_datetime(df.index)
+        column_name = f"{base_currency}{target_currency}"
+        df.columns = [target_currency]
+        df.sort_index(inplace=True)
+
+        # Calculate stats
+        highest_rate = df[target_currency].max()
+        highest_date = df[target_currency].idxmax().date()
+        lowest_rate = df[target_currency].min()
+        lowest_date = df[target_currency].idxmin().date()
+
+        # Percentage changes with safety checks
+        latest = df[target_currency].iloc[-1]
+        day_ago = df[target_currency].iloc[-2] if len(df) > 1 else latest
+        week_ago = df[target_currency].iloc[-7] if len(df) > 7 else latest
+        month_ago = df[target_currency].iloc[-30] if len(df) > 30 else latest
+        year_ago = df[target_currency].iloc[0]
+
+        def safe_percent_change(new, old):
+            return ((new - old) / old) * 100 if old != 0 else 0
+
+        percent_day = safe_percent_change(latest, day_ago)
+        percent_week = safe_percent_change(latest, week_ago)
+        percent_month = safe_percent_change(latest, month_ago)
+        percent_year = safe_percent_change(latest, year_ago)
+
+        # Display stats
+        st.subheader(f"💹 {base_currency} → {target_currency}")
+        st.markdown(f"**Highest:** `{highest_rate:.4f}` on {highest_date}")
+        st.markdown(f"**Lowest:** `{lowest_rate:.4f}` on {lowest_date}")
+        st.markdown(f"**Current Rate:** `{latest:.4f}`")
+
+        st.subheader("📊 % Change")
+        cols = st.columns(2)
+        cols[0].metric("1 Day", f"{percent_day:.2f}%")
+        cols[1].metric("1 Week", f"{percent_week:.2f}%")
+        cols[0].metric("1 Month", f"{percent_month:.2f}%")
+        cols[1].metric("1 Year", f"{percent_year:.2f}%")
+
+        # Improved chart visualization
+        st.subheader("📈 1-Year Trend")
+        
+        # Resample to weekly data if too many points
+        if len(df) > 100:
+            chart_df = df.resample('W').mean()
+        else:
+            chart_df = df.copy()
+            
+        # Format y-axis to show reasonable decimal places
+        min_rate = chart_df[target_currency].min()
+        max_rate = chart_df[target_currency].max()
+        y_range = max_rate - min_rate
+        
+        if y_range < 0.1:  # Small fluctuations
+            st.line_chart(chart_df, y=target_currency, height=300, use_container_width=True)
+        elif y_range < 1:  # Medium fluctuations
+            st.line_chart(chart_df, y=target_currency, height=300, use_container_width=True)
+        else:  # Large fluctuations
+            st.line_chart(chart_df, y=target_currency, height=300, use_container_width=True)
+            
+    else:
+        st.warning("⚠️ Historical data not available. Using cached data if possible.")
+        # You could add logic here to load the last successful cached data
+
+# Add some app 
+# Add this at the bottom of your sidebar section (before the last line)
+with st.sidebar:
+    st.markdown("---")
+    st.markdown("**Project by Francis Kamande**")
+    st.markdown("*Currency Converter App*")
+st.sidebar.markdown("---")
+st.sidebar.markdown("**ℹ️ App Info**")
+st.sidebar.markdown("- Data updates every 6 hours")
+st.sidebar.markdown("- Rates are mid-market rates")
+st.sidebar.markdown("- For demonstration purposes")
+st.markdown("---")
+st.caption("© 2024 | Developed by Francis Kamande")
