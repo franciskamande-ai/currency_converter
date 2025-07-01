@@ -162,3 +162,23 @@ st.sidebar.markdown("- Rates are mid-market rates")
 st.sidebar.markdown("- For demonstration purposes")
 st.markdown("---")
 st.caption("© 2024 | Developed by Francis Kamande")
+
+# ===== OPTION 2 (COMMENTED OUT) =====
+st.markdown("---")
+st.subheader("🚀 Exclusive Broker Deals")
+
+# HFM with button + logo
+st.image("https://upload.wikimedia.org/your-hfm-logo.png", width=100)
+st.link_button("🔥 Get HFM for best spreads at a low price and reliable services", "https://hfm.com/refid=30422626")
+
+# Other brokers
+cols = st.columns(3)
+with cols[0]:
+    st.link_button("📉 XM 100% Bonus", "https://www.xmglobal.com/referral?token=V5m4hQfyw3123tPd6471jQ")
+with cols[1]:
+    st.link_button("💎JUST MARKETS(high leverage,low spreads) ", "https://one.justmarkets.link/a/3gs6b0rel5")
+with cols[2]:
+    st.link_button("🦅 FBS ", "https://FBS.LINK")
+
+st.markdown("<small>Disclosure: These are affiliate links that support the app.</small>", unsafe_allow_html=True)
+
