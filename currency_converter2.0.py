@@ -22,8 +22,8 @@ st.title("💱 FKN CURRENCY CONVERTER")
 
 # --- Currency List ---
 currency_list = [
-    "USD", "KES", "EUR", "GBP", "JPY", "AUD", "CAD", "CHF", "ZAR", "INR", 
-    "CNY", "NZD", "SGD", "NGN", "GHS", "TZS", "UGX", "RUB", "BRL", "MXN"
+    "USD", "KES", "EUR", "GBP", "JPY", "AUD", "CAD", "CHF", "ZAR", "INR","AED","SAR"
+    "CNY", "NZD", "SGD", "NGN", "GHS", "TZS", "UGX", "RUB", "BRL", "MXN","AED","SAR"
 ]
 
 # --- UI: Currency dropdowns and amount ---
@@ -178,7 +178,7 @@ with cols[0]:
 with cols[1]:
     st.link_button("💎JUST MARKETS(high leverage,low spreads) ", "https://one.justmarkets.link/a/3gs6b0rel5")
 with cols[2]:
-    st.link_button("🦅 FBS ", "https://FBS.LINK")
+    st.link_button("🦅 BEATRICE ", "https://FBS.LINK")
 
 st.markdown("<small>Disclosure: These are affiliate links that support the app.</small>", unsafe_allow_html=True)
 
