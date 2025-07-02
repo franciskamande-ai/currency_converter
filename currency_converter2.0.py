@@ -177,7 +177,7 @@ with cols[0]:
 with cols[1]:
     st.link_button("💎JUST MARKETS(high leverage,low spreads) ", "https://one.justmarkets.link/a/3gs6b0rel5")
 with cols[2]:
-    st.link_button("🦅FBS ", "https://FBS.LINK")
+    st.link_button("🦅FBS ", "https://fbs.patners?ibl=35367337")
 
 st.markdown("<small>Disclosure: These are affiliate links that support the app.</small>", unsafe_allow_html=True)
 
